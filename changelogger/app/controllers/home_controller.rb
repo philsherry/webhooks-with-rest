@@ -4,7 +4,7 @@ class HomeController < ApplicationController
   def show
     welcome = {
       title: 'Webhooks & REST API Workshop',
-      description: 'Its going to be an awesome ride.'
+      description: 'I’ve got an Uncontrollable Urge.'
     }
     render json: welcome
   end

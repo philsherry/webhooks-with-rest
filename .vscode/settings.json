@@ -21,7 +21,7 @@
         }
     },
     "ruby.linter.run": "onSave",
-    "ruby.rubocop.executePath": "/usr/local/bin",
+    "ruby.rubocop.executePath": "/usr/local/bin/",
     "ruby.rubocop.onSave": true,
     "ruby.useBundler": true,
     "ruby.useLanguageServer": true,
