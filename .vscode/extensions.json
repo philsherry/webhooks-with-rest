@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "hoovercj.ruby-linter",
+        "jnbt.vscode-rufo",
+        "misogi.ruby-rubocop",
+        "rebornix.ruby",
+        "vayan.haml",
+        "wingrunr21.vscode-ruby"
+    ]
+}

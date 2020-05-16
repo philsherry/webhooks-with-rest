@@ -1,0 +1,38 @@
+{
+    "cSpell.words": [
+        "changelog",
+        "ngrok",
+        "octokit",
+        "Octokit",
+        "Powershell",
+        "webhook",
+        "Webhook",
+        "webhooks",
+        "Webhooks",
+        "webserver"
+    ],
+    "ruby.format": "rubocop",
+    "ruby.lint": {
+        "reek": {
+            "useBundler": true
+        },
+        "rubocop": {
+            "useBundler": true
+        }
+    },
+    "ruby.linter.run": "onSave",
+    "ruby.rubocop.executePath": "/usr/local/bin",
+    "ruby.rubocop.onSave": true,
+    "ruby.useBundler": true,
+    "ruby.useLanguageServer": true,
+    "rufo.exe": "rufo",
+    "rufo.useBundler": true,
+    "spellright.documentTypes": [
+        "markdown",
+        "plaintext"
+    ],
+    "spellright.language": [
+        "en_GB",
+        "en"
+    ]
+}

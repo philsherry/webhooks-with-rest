@@ -1,17 +1,25 @@
-class WebhooksController < ApplicationController
-  WEBHOOK_HEADERS = ["HTTP_USER_AGENT", "CONTENT_TYPE", "HTTP_X_GITHUB_EVENT", "HTTP_X_GITHUB_DELIVERY", "HTTP_X_HUB_SIGNATURE"]
+# frozen_string_literal: true
 
-#  before_action :verify_signature!
-#  before_action :verify_event_type!
+class WebhooksController < ApplicationController
+  WEBHOOK_HEADERS = %w[
+    HTTP_USER_AGENT
+    CONTENT_TYPE
+    HTTP_X_GITHUB_EVENT
+    HTTP_X_GITHUB_DELIVERY
+    HTTP_X_HUB_SIGNATURE
+  ].freeze
+
+  before_action :verify_signature!
+  before_action :verify_event_type!
 
   def create
-#    return error("not labeled") unless labeled?
-#    return error("not closed") unless closed?
-#    return error("not merged") unless merged_into_master?
+    return error('not labeled') unless labeled?
+    return error('not closed') unless closed?
+    return error('not merged') unless merged_into_master?
 
-#    create_changelog_entry
+    create_changelog_entry
 
-    puts "Webhook successfully received!!!"
+    puts 'Webhook successfully received!!!'
     WEBHOOK_HEADERS.each do |header|
       puts "#{header}: #{request.headers[header]}"
     end
@@ -20,7 +28,7 @@ class WebhooksController < ApplicationController
   private
 
   def payload
-    params["webhook"]
+    params['webhook']
   end
 
   def error(msg)
@@ -29,93 +37,101 @@ class WebhooksController < ApplicationController
     render(status: 422, json: text)
   end
 
-#  def verify_event_type!
-#    type = request.headers["HTTP_X_GITHUB_EVENT"]
-#    return if type == "pull_request"
-#    error("unallowed event type: #{type}")
-#  end
+  def verify_event_type!
+    type = request.headers['HTTP_X_GITHUB_EVENT']
+    return if type == 'pull_request'
 
-#  def labeled?
-#    payload["pull_request"]["labels"].any? do |label|
-#      label["name"] == "documentation"
-#    end
-#  end
+    error("unallowed event type: #{type}")
+  end
 
-#  def closed?
-#    payload["action"] == "closed"
-#  end
+  def labeled?
+    payload['pull_request']['labels'].any? do |label|
+      label['name'] == 'documentation'
+    end
+  end
 
-#  def merged_into_master?
-#    merged = payload["pull_request"]["merged"] == true
-#    in_to_master = payload["pull_request"]["base"]["ref"] == "master"
+  def closed?
+    payload['action'] == 'closed'
+  end
 
-#    merged && in_to_master
-#  end
+  def merged_into_master?
+    merged = payload['pull_request']['merged'] == true
+    in_to_master = payload['pull_request']['base']['ref'] == 'master'
 
-#  def octokit
-#    Octokit::Client.new(access_token: ENV["GITHUB_PERSONAL_ACCESS_TOKEN"])
-#  end
+    merged && in_to_master
+  end
 
-#  def create_changelog_entry
-#    content, sha = get_file
-#    return unless content
+  def octokit
+    Octokit::Client.new(access_token: ENV['GITHUB_PERSONAL_ACCESS_TOKEN'])
+  end
 
-#    octokit.update_contents(repo, # repository we're updating
-#                            "docs/index.md", # file we're updating
-#                            "New changelog entry", # commit message for update
-#                            sha, # head sha for the file we're updating
-#                            content + format_changes) # actual contents
-#  end
+  def create_changelog_entry
+    content, sha = get_file
+    return unless content
 
-#  def get_file
-#    response = octokit.contents(repo, path: "docs/index.md")
-#    [Base64.decode64(response["content"]), response["sha"]]
-#  rescue
-#    nil
-#  end
+    # repository we're updating
+    # file we're updating
+    # commit message for update
+    # head sha for the file we're updating
+    # actual contents
 
-#  def repo
-#    payload["repository"]["full_name"]
-#  end
+    octokit.update_contents(
+      repo,
+      'docs/index.md',
+      'New changelog entry',
+      sha, content + format_changes
+    )
+  end
 
-#  def format_changes
-#    author_avatar = payload["pull_request"]["user"]["avatar_url"]
-#    author_name   = payload["pull_request"]["user"]["login"]
-#    author_url    = payload["pull_request"]["user"]["html_url"]
+  def get_file
+    response = octokit.contents(repo, path: 'docs/index.md')
+    [Base64.decode64(response['content']), response['sha']]
+  rescue StandardError
+    nil
+  end
 
-#    diff_url = payload["pull_request"]["diff_url"]
-#    pr_url = payload["pull_request"]["html_url"]
+  def repo
+    payload['repository']['full_name']
+  end
 
-#    <<-ENTRY
-## #{Time.now.utc.to_s}
+  def format_changes
+    author_avatar = payload['pull_request']['user']['avatar_url']
+    author_name   = payload['pull_request']['user']['login']
+    author_url    = payload['pull_request']['user']['html_url']
 
-#By: ![avatar](#{author_avatar}&s=50) [#{author_name}](#{author_url})
+    diff_url = payload['pull_request']['diff_url']
+    pr_url = payload['pull_request']['html_url']
 
-##{change_description}
+    <<~ENTRY
+      ## #{Time.now.utc}
 
-#[[diff](#{diff_url})][[pull request](#{pr_url})]
-#* * *
-#    ENTRY
-#  end
+      By: ![avatar](#{author_avatar}&s=50) [#{author_name}](#{author_url})
 
-#  def change_description
-#    body = payload["pull_request"]["body"]
-#    if matches = body.match(/<changes>(.*)<\/changes>/m)
-#      matches.captures.first.strip
-#    else
-#      payload["pull_request"]["title"]
-#    end
-#  end
+      #{change_description}
 
-#  def verify_signature!
-#    secret = ENV["GITHUB_WEBHOOK_SECRET"]
+      [[diff](#{diff_url})][[pull request](#{pr_url})]
+      * * *
+    ENTRY
+  end
 
-#    signature = 'sha1='
-#    signature += OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha1'), secret, request.body.read)
+  def change_description
+    body = payload['pull_request']['body']
+    if matches = body.match(%r{<changes>(.*)</changes>}m)
+      matches.captures.first.strip
+    else
+      payload['pull_request']['title']
+    end
+  end
 
-#    unless Rack::Utils.secure_compare(signature, request.env['HTTP_X_HUB_SIGNATURE'])
-#      guid = request.headers["HTTP_X_GITHUB_DELIVERY"]
-#      error("unable to verify payload for #{guid}")
-#    end
-#  end
+  def verify_signature!
+    secret = ENV['GITHUB_WEBHOOK_SECRET']
+
+    signature = 'sha1='
+    signature += OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha1'), secret, request.body.read)
+
+    unless Rack::Utils.secure_compare(signature, request.env['HTTP_X_HUB_SIGNATURE'])
+      guid = request.headers['HTTP_X_GITHUB_DELIVERY']
+      error("unable to verify payload for #{guid}")
+    end
+  end
 end

@@ -2,15 +2,15 @@
 
 Welcome! Thanks for joining us at our webhooks and REST API workshop. Today we'll be covering [webhooks](https://developer.github.com/webhooks/) and our [REST API](https://developer.github.com/v3/).
 
-# What we're working on
+## What we're working on
 
-The project that we are going to build together today is a changelog application. The entries will automatically be added when pull requests are merged. The changelog will be hosted by GitHub Pages. Here's an example of the final product: https://githubsatelliteworkshops.github.io/webhooks-with-rest/
+The project that we are going to build together today is a changelog application. The entries will automatically be added when pull requests are merged. The changelog will be hosted by GitHub Pages. Here's an example of the final product: <https://githubsatelliteworkshops.github.io/webhooks-with-rest/>
 
 ![image](https://user-images.githubusercontent.com/3330181/80778977-34e3df80-8b38-11ea-825e-8f427d3acb78.png)
 
-# Getting started
+## Getting started
 
-## Fork and clone
+### Fork and clone
 
 To get started you first need to fork this repository
 
@@ -20,36 +20,35 @@ clone your forked repo to your local machine
 
 <img src="https://user-images.githubusercontent.com/3330181/80672075-a1e47000-8a79-11ea-82d7-544c323642b2.png" width=500>
 
-```
+```sh
 git clone git@github.com:<username>/webhooks-with-rest.git --config core.autocrlf=input
 ```
 
-
-## Bootstrap
+### Bootstrap
 
 Now that you have the repo locally `cd` into that directory and run
 
 For Unix:
 
-```
+```sh
 script/bootstrap
 ```
 
 For Windows (in Powershell):
 
-```
+```sh
 .\exe\bootstrap.ps1
 ```
 
 Be sure you have docker running before attempting that command.
 
-## Credentials
+### Credentials
 
 Now that you have the docker image created, we need to setup some credentials.
 
-### Personal acess token
+#### Personal access token
 
-Let's generate a personal access token (PAT) for this workshop. First head to https://github.com/settings/tokens/new. Once there, name your token and select the `repo` scope.
+Let's generate a personal access token (PAT) for this workshop. First head to <https://github.com/settings/tokens/new.> Once there, name your token and select the `repo` scope.
 
 <details>
   <summary>Example Configuration</summary>
@@ -62,11 +61,11 @@ Once you've generated it, be sure to copy it because you won't be able to view i
 
 With it copied to your clipboard, open a file called `/changelogger/.env` on your favorite editor and update the value of the environment variable `GITHUB_PERSONAL_ACCESS_TOKEN` to the one that you just copied.
 
-### Webhook secret
+#### Webhook secret
 
 When we configure our webhook in a few minutes, we are going to do so with a random secret token. In general, it's best to use a very random string, but for today just pick anything that you can remember for long enough to configure your webhook with. Then follow exactly what we did for the personal access token but this time update the value of the environment variable `GITHUB_WEBHOOK_SECRET` to the one that you just copied.
 
-## Enable GitHub Pages
+### Enable GitHub Pages
 
 We will need GitHub Pages to be enabled in order to view the changelog we are creating. Go to the repository settings page
 
@@ -79,30 +78,29 @@ Scroll down to the GitHub Pages section, and enable pages for `master branch /do
 
 ![image](https://user-images.githubusercontent.com/3330181/80670658-7f505800-8a75-11ea-9f49-e81a75d04668.png)
 
-
 </details>
 
 Once selected, it should say that the site is ready to be published and the URL it generated for you. If you click the link, it should take you to a 404 page right now.
 
-# Step 0: Configuring a webhook
+## Step 0: Configuring a webhook
 
 Now that we have all of the credentials necessary, we can run
 
 For Unix:
 
-```
+```sh
 script/server
 ```
 
 For Windows (in Powershell):
 
-```
+```sh
 .\exe\server.ps1
 ```
 
 This will start the app server as well as a proxy to tunnel requests to your local server. There should be an output that includes a URL.
 
-```
+```sh
 $ script/server
 
 ╔═══╦╗─────────────╔╗
@@ -172,7 +170,7 @@ and in the server output
 <details>
   <summary>Server Logs</summary>
 
-```
+```json
 {
   "zen": "Keep it logically awesome.",
   "hook_id": 208294689,
@@ -326,11 +324,11 @@ method=POST path=/ format=*/* controller=WebhooksController action=create status
 
 </details>
 
-Congrats! You just recieved your first webhook! 🎉
+Congrats! You just received your first webhook! 🎉
 
-# Step 1: Filter events
+## Step 1: Filter events
 
-The next step is to filter the events that we recieve to only act upon the ones that we care about. Use the payload's fields to determine which ones we want. For this project we care only about the pull requests that:
+The next step is to filter the events that we receive to only act upon the ones that we care about. Use the payload's fields to determine which ones we want. For this project we care only about the pull requests that:
 
 - the action is closed
 - the PR's state is merged and not just closed
@@ -338,44 +336,44 @@ The next step is to filter the events that we recieve to only act upon the ones 
 
 We'll work on adding this code together, but if you fall behind, feel free to check out the `filter-events` branch, which has this step complete already.
 
-```
+```sh
 git checkout filter-events
 ```
 
-Diff: https://github.com/githubsatelliteworkshops/webhooks-with-rest/compare/master...filter-events
+Diff: <https://github.com/githubsatelliteworkshops/webhooks-with-rest/compare/master...filter-events>
 
-# Step 2: Octokit
+## Step 2: Octokit
 
 Now that we know we are only acting on the events we care about, we need to _do something_ with this data. For this project, we are doing to parse the webhook payload for information and then POST it back to the repo in the form of a changelog entry. In order to do the POSTing, we need to setup our SDK client: Octokit.
 
 We'll work on adding and testing this client together, but if you fall behind, feel free to check out the `octokit` branch, which has this step complete already.
 
-```
+```sh
 git checkout octokit
 ```
 
-Diff: https://github.com/githubsatelliteworkshops/webhooks-with-rest/compare/filter-events...octokit
+Diff: <https://github.com/githubsatelliteworkshops/webhooks-with-rest/compare/filter-events...octokit>
 
-# Step 3: REST API calls
+## Step 3: REST API calls
 
 Since we can make API calls now, let's add the logic of adding the changelog entry. We need to determine if the `docs/index.md` file exists already and if it does, we'll append a new entry. If it doesn't, we'll need to create a default one and add the new entry. We are going to be using the [Contents API](https://developer.github.com/v3/repos/contents/) to do this, but we are going to use the octokit methods to help us out.
 
 This is our biggest step, so if you fall behind, feel free to check out the `add-changelog-entries` branch, which has this step complete already.
 
-```
+```sh
 git checkout add-changelog-entries
 ```
 
-Diff: https://github.com/githubsatelliteworkshops/webhooks-with-rest/compare/octokit...add-changelog-entries
+Diff: <https://github.com/githubsatelliteworkshops/webhooks-with-rest/compare/octokit...add-changelog-entries>
 
-# Step 4: Verify webhooks
+## Step 4: Verify webhooks
 
-The project is technically feature complete at this point, but we want to go over some webhook best practices. So, we are also going to add logic to verify that the payload came from GitHub. The way we do that is by generating a checksum of the payload and webhook secret, and comparing it with the one sent to us by GitHub in the `X-Hub-Signature` header. More information can be found in the docs: https://developer.github.com/webhooks/securing/
+The project is technically feature complete at this point, but we want to go over some webhook best practices. So, we are also going to add logic to verify that the payload came from GitHub. The way we do that is by generating a checksum of the payload and webhook secret, and comparing it with the one sent to us by GitHub in the `X-Hub-Signature` header. More information can be found in the docs: <https://developer.github.com/webhooks/securing/>
 
-This is our most technically complext step, so if you fall behind, feel free to check out the `verify-webhooks` branch, which has this step complete already.
+This is our most technically complex step, so if you fall behind, feel free to check out the `verify-webhooks` branch, which has this step complete already.
 
-```
+```sh
 git checkout verify-webhooks
 ```
 
-Diff: https://github.com/githubsatelliteworkshops/webhooks-with-rest/compare/add-changelog-entries...verify-webhooks
+Diff: <https://github.com/githubsatelliteworkshops/webhooks-with-rest/compare/add-changelog-entries...verify-webhooks>
